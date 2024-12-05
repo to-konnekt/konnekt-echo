@@ -1,26 +1,32 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const WebSocket = require("ws");
-const dgram = require("dgram");
-const http = require("http");
+import WebSocket, { WebSocketServer } from "ws";
+import dgram from "dgram";
+import http from "http";
+import {
+  SCREENS,
+  WS_PORT,
+  MESSAGE_TYPE,
+  UDP_PORT,
+} from "../shared/constants.js";
 
 const httpServer = http.createServer();
-const wss = new WebSocket.Server({ server: httpServer });
+const wss = new WebSocketServer({ server: httpServer });
 
-let currentScreen = 0;
-const screens = ["Screen 1", "Screen 2", "Screen 3", "Screen 4"];
+let currentScreen = SCREENS[0].id;
 
 wss.on("connection", (ws) => {
   console.log("Client connected");
 
-  // Send initial screen
   ws.send(
-    JSON.stringify({ type: "CHANGE_SCREEN", screen: screens[currentScreen] })
+    JSON.stringify({
+      type: MESSAGE_TYPE.CHANGE_SCREEN,
+      payload: currentScreen,
+    })
   );
 
   ws.on("message", (message) => {
     const data = JSON.parse(message);
-    if (data.type === "CHANGE_SCREEN") {
-      currentScreen = (currentScreen + 1) % screens.length;
+    if (data.type === MESSAGE_TYPE.CHANGE_SCREEN) {
+      currentScreen = data.payload;
       broadcastScreen();
     }
   });
@@ -31,8 +37,8 @@ function broadcastScreen() {
     if (client.readyState === WebSocket.OPEN) {
       client.send(
         JSON.stringify({
-          type: "CHANGE_SCREEN",
-          screen: screens[currentScreen],
+          type: MESSAGE_TYPE.CHANGE_SCREEN,
+          payload: currentScreen,
         })
       );
     }
@@ -44,12 +50,12 @@ const udpServer = dgram.createSocket("udp4");
 
 udpServer.on("message", (msg) => {
   console.log("UDP message received");
-  currentScreen = (currentScreen + 1) % screens.length;
+  currentScreen = SCREENS[0].id;
   broadcastScreen();
 });
 
-udpServer.bind(5000);
+udpServer.bind(UDP_PORT);
 
-httpServer.listen(3001, () => {
-  console.log("Server is running on http://localhost:3001");
+httpServer.listen(WS_PORT, () => {
+  console.log(`Server is running on http://localhost:${WS_PORT}`);
 });
