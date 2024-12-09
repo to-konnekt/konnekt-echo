@@ -39,7 +39,7 @@ export default function Hero() {
             </span>
             <span>NeuroLab</span>
           </div>
-          <div className="bg-gradient-to-t from-accentGradientFrom to-accentGradientStops blur-[200px] w-[1405px] h-[735px] absolute bottom-[-81px] left-[960px]"></div>
+          <div className="bg-gradient-to-t from-accentGradientFrom to-accentGradientStops blur-[180px] w-[1405px] h-[735px] absolute bottom-[-81px] left-[960px]"></div>
         </div>
       </section>
 
