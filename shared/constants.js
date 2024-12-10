@@ -6,7 +6,8 @@ export const SCREENS = [
 ];
 
 export const WS_PORT = 3001;
-export const UDP_PORT = 5000;
+export const UDP_PORT = 5555;
+export const SERVER_IP = '0.0.0.0';
 
 export const MESSAGE_TYPE = {
   CHANGE_SCREEN: "CHANGE_SCREEN",
