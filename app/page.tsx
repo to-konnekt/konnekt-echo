@@ -1,8 +1,12 @@
 "use client";
 
-import Hero from "@/components/Hero";
-import Intro, { IntroProps } from "@/components/Intro";
+import { Answer } from "@/components/Answer";
+import { Action } from "@/components/Action";
+import { Final } from "@/components/Final";
+import { Hero } from "@/components/Hero";
+import Intro, { IntroProps, NeiryType } from "@/components/Intro";
 import { MESSAGE_TYPE, SCREENS, WS_PORT } from "@/shared/constants";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
 type ChangeScreenMessageType = {
@@ -10,9 +14,11 @@ type ChangeScreenMessageType = {
   currentParams: IntroProps
 }
 
+const queryClient = new QueryClient();
+
 export default function Page() {
   const [currentScreenId, setCurrentScreenId] = useState(SCREENS[0].id);
-  const [currentParams, setCurrentParams] = useState<IntroProps>({ neiryParam1: '1', neiryParam2: '1' })
+  const [currentParams, setCurrentParams] = useState<{neiryParam1: NeiryType, neiryParam2: NeiryType}>({ neiryParam1: '1', neiryParam2: '1' })
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -40,8 +46,22 @@ export default function Page() {
     };
   }, []);
 
-  return <>
+  const changeScreen = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: MESSAGE_TYPE.CHANGE_SCREEN,
+          payload: { currentScreenId },
+        })
+      );
+    }
+  }
+
+  return <QueryClientProvider client={queryClient}>
     {currentScreenId === 'idle' && <Hero />}
-    {currentScreenId === 'intro' && <Intro {...currentParams} />}
-  </>;
+    {currentScreenId === 'intro' && <Intro {...currentParams} changeScreen={changeScreen} />}
+    {currentScreenId === 'action' && <Action changeScreen={changeScreen} />}
+    {currentScreenId === 'answer' && <Answer changeScreen={changeScreen} />}
+    {currentScreenId === 'end' && <Final changeScreen={changeScreen} />}
+  </QueryClientProvider>;
 }

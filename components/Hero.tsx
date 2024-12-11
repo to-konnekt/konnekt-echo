@@ -1,4 +1,4 @@
-export default function Hero() {
+export function Hero() {
   return (
     <main className="min-h-screen flex">
       {/* Left Section */}
