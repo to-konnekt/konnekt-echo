@@ -9,11 +9,15 @@ import {
   UDP_HOST,
   TEST_SERVER_OUT_HOST,
   TEST_SERVER_OUT_PORT,
-  SCREENS_TRANSITIONS
+  SCREENS_TRANSITIONS,
+  TEST_SERVER_IN_HOST,
+  TEST_SERVER_IN_PORT
 } from "../shared/constants.js";
 
 const httpServer = http.createServer();
 const wss = new WebSocketServer({ server: httpServer });
+const udpServer = dgram.createSocket("udp4");
+udpServer.bind(UDP_PORT, UDP_HOST);
 
 let currentScreen = SCREENS[0].id;
 let currentParams = {};
@@ -28,13 +32,25 @@ wss.on("connection", (ws) => {
     })
   );
 
-  // ws.on("message", (message) => {
-  //   const data = JSON.parse(message);
-  //   if (data.type === MESSAGE_TYPE.CHANGE_SCREEN) {
-  //     currentScreen = data.payload;
-  //     broadcastScreen();
-  //   }
-  // });
+  ws.on("message", (message) => {
+    const data = JSON.parse(message);
+    if (data.type === MESSAGE_TYPE.CHANGE_SCREEN) {
+      currentScreen = SCREENS_TRANSITIONS[data.payload.currentScreenId];
+      currentParams = {};
+
+      const messageString = currentScreen;
+      const message = Buffer.from(messageString);
+      udpServer.send(message, TEST_SERVER_IN_PORT, TEST_SERVER_IN_HOST, (err) => {
+          if (err) {
+              console.error('Error sending response:', err);
+          } else {
+              console.log(`Message "${messageString}" sent to client ${UDP_HOST}:${UDP_PORT}`);
+          }
+      })
+
+      broadcastScreen();
+    }
+  });
 });
 
 function broadcastScreen() {
@@ -43,15 +59,12 @@ function broadcastScreen() {
       client.send(
         JSON.stringify({
           type: MESSAGE_TYPE.CHANGE_SCREEN,
-          payload: {currentScreen, params: currentParams},
+          payload: {currentScreen, currentParams: currentParams},
         })
       );
     }
   });
 }
-
-// UDP Server
-const udpServer = dgram.createSocket("udp4");
 
 udpServer.on("message", ((msg, rinfo) => {
   if (rinfo.address === TEST_SERVER_OUT_HOST && rinfo.port === TEST_SERVER_OUT_PORT && currentScreen === SCREENS[0].id) {
@@ -68,7 +81,6 @@ udpServer.on("message", ((msg, rinfo) => {
   }
 }));
 
-udpServer.bind(UDP_PORT, UDP_HOST);
 
 httpServer.listen(WS_PORT, () => {
   console.log(`Server is running on http://localhost:${WS_PORT}`);

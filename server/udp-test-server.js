@@ -37,7 +37,7 @@ process.on('SIGINT', () => {
     });
 });
 
-setInterval(() => {
+setTimeout(() => {
     const neiryParam1 = '1';
     const neiryParam2 = '9';
 
@@ -50,7 +50,7 @@ setInterval(() => {
             console.log(`Message "${messageString}" sent to client ${UDP_HOST}:${UDP_PORT}`);
         }
     })
-}, 1000)
+}, 10000)
 
 serverIn.on('message', (msg, rinfo) => {
     console.log(`ServerIn received: ${msg} from ${rinfo.address}:${rinfo.port}`);
